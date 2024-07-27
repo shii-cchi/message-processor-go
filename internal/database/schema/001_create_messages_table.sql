@@ -1,7 +1,7 @@
 -- +goose Up
 
 CREATE TABLE messages (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     content TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'unprocessed'
 );

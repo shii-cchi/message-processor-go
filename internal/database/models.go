@@ -4,8 +4,12 @@
 
 package database
 
+import (
+	"github.com/google/uuid"
+)
+
 type Message struct {
-	ID      int32
+	ID      uuid.UUID
 	Content string
 	Status  string
 }

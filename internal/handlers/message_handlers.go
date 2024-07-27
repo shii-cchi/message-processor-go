@@ -24,6 +24,13 @@ func (h *Handler) createMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = h.messageService.SendMessageToKafka(message)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Coudn't send message to Kafka: %v", err))
+		return
+	}
+
 	respondWithJSON(w, http.StatusCreated, message)
 }
 

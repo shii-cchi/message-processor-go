@@ -7,16 +7,23 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createMessage = `-- name: CreateMessage :one
-INSERT INTO messages (content)
-VALUES ($1)
+INSERT INTO messages (id, content)
+VALUES ($1, $2)
 RETURNING id, content, status
 `
 
-func (q *Queries) CreateMessage(ctx context.Context, content string) (Message, error) {
-	row := q.db.QueryRowContext(ctx, createMessage, content)
+type CreateMessageParams struct {
+	ID      uuid.UUID
+	Content string
+}
+
+func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error) {
+	row := q.db.QueryRowContext(ctx, createMessage, arg.ID, arg.Content)
 	var i Message
 	err := row.Scan(&i.ID, &i.Content, &i.Status)
 	return i, err
@@ -43,4 +50,20 @@ func (q *Queries) GetProcessedMessagesCount(ctx context.Context) (int64, error) 
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const updateMessageStatus = `-- name: UpdateMessageStatus :exec
+UPDATE messages
+SET status = $2
+WHERE id = $1
+`
+
+type UpdateMessageStatusParams struct {
+	ID     uuid.UUID
+	Status string
+}
+
+func (q *Queries) UpdateMessageStatus(ctx context.Context, arg UpdateMessageStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateMessageStatus, arg.ID, arg.Status)
+	return err
 }
