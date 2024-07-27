@@ -1,4 +1,4 @@
-package broker
+package producer
 
 import (
 	"fmt"
@@ -6,9 +6,13 @@ import (
 	"log"
 )
 
-func NewProducer() (*kafka.Producer, error) {
+type Producer struct {
+	producer *kafka.Producer
+}
+
+func NewProducer(kafkaBrokers string) (*Producer, error) {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
+		"bootstrap.servers": kafkaBrokers,
 		"acks":              "all"})
 
 	if err != nil {
@@ -33,13 +37,15 @@ func NewProducer() (*kafka.Producer, error) {
 		}
 	}(p)
 
-	return p, nil
+	return &Producer{
+		producer: p,
+	}, nil
 }
 
-func SendMessage(p *kafka.Producer, message []byte) error {
+func (p *Producer) SendMessage(message []byte) error {
 	topic := "to-be-processed"
 
-	err := p.Produce(&kafka.Message{
+	err := p.producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          message,
 	}, nil)
@@ -48,7 +54,7 @@ func SendMessage(p *kafka.Producer, message []byte) error {
 		return fmt.Errorf("Failed to produce message: %s\n", err)
 	}
 
-	p.Flush(15 * 1000)
+	p.producer.Flush(15 * 1000)
 
 	return nil
 }

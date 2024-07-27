@@ -4,16 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
-	"github.com/shii-cchi/message-processor-go/internal/broker"
+	"github.com/shii-cchi/message-processor-go/internal/broker/producer"
 	"github.com/shii-cchi/message-processor-go/internal/database"
 )
 
 type MessageService struct {
 	queries       *database.Queries
-	kafkaProducer *kafka.Producer
-	kafkaConsumer *kafka.Consumer
+	kafkaProducer *producer.Producer
 }
 
 type Message struct {
@@ -21,11 +19,10 @@ type Message struct {
 	Content string    `json:"content"`
 }
 
-func NewMessageService(q *database.Queries, p *kafka.Producer, c *kafka.Consumer) *MessageService {
+func NewMessageService(q *database.Queries, p *producer.Producer) *MessageService {
 	return &MessageService{
 		queries:       q,
 		kafkaProducer: p,
-		kafkaConsumer: c,
 	}
 }
 
@@ -52,7 +49,7 @@ func (s MessageService) SendMessageToKafka(message database.Message) error {
 		return fmt.Errorf("failed to serialize message: %s", err)
 	}
 
-	err = broker.SendMessage(s.kafkaProducer, msg)
+	err = s.kafkaProducer.SendMessage(msg)
 
 	return err
 }

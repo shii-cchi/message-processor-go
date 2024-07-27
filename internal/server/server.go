@@ -1,11 +1,11 @@
 package server
 
 import (
-	"context"
 	"database/sql"
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
-	"github.com/shii-cchi/message-processor-go/internal/broker"
+	"github.com/shii-cchi/message-processor-go/internal/broker/consumer"
+	"github.com/shii-cchi/message-processor-go/internal/broker/producer"
 	"github.com/shii-cchi/message-processor-go/internal/config"
 	"github.com/shii-cchi/message-processor-go/internal/database"
 	"github.com/shii-cchi/message-processor-go/internal/handlers"
@@ -34,35 +34,22 @@ func NewServer(r chi.Router) (*Server, error) {
 
 	queries := database.New(conn)
 
-	kafkaProducer, err := broker.NewProducer()
+	kafkaProducer, err := producer.NewProducer(cfg.KafkaBrokers)
 
 	if err != nil {
 		return nil, err
 	}
 
-	kafkaConsumer, err := broker.NewConsumer()
-
-	if err != nil {
-		return nil, err
-	}
-
-	services := service.NewMessageService(queries, kafkaProducer, kafkaConsumer)
+	services := service.NewMessageService(queries, kafkaProducer)
 
 	go func() {
-		for {
-			msg, err := kafkaConsumer.ReadMessage(-1)
-			if err == nil {
-				log.Printf("Received message: %s\n", string(msg.Value))
-			} else {
-				log.Printf("Consumer error: %v (%v)\n", err, msg)
-			}
+		kafkaConsumer, err := consumer.NewConsumer(cfg.KafkaBrokers, services)
 
-			err = services.UpdateMessageStatus(context.Background(), msg.Value)
-
-			if err != nil {
-				log.Println(err)
-			}
+		if err != nil {
+			log.Fatalf("Failed to create Kafka consumer: %s\n", err)
 		}
+
+		kafkaConsumer.StartConsuming()
 	}()
 
 	handler := handlers.NewHandler(services)
