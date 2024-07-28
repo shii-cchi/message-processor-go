@@ -13,9 +13,9 @@ type Consumer struct {
 	service  *service.MessageService
 }
 
-func NewConsumer(kafkaBrokers string, s *service.MessageService) (*Consumer, error) {
+func NewConsumer(kafkaBroker string, s *service.MessageService) (*Consumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": kafkaBrokers,
+		"bootstrap.servers": kafkaBroker,
 		"group.id":          "processed-messages-group",
 		"auto.offset.reset": "earliest",
 	})

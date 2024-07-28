@@ -9,9 +9,16 @@ import (
 
 func main() {
 	log.Println("test-service starting")
+
+	kafkaBroker := os.Getenv("KAFKA_BROKER")
+
+	if kafkaBroker == "" {
+		log.Fatal("KAFKA_BROKER is not found")
+	}
+
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": "kafka:9092",
-		"group.id":          "myGroup",
+		"bootstrap.servers": kafkaBroker,
+		"group.id":          "unprocessed-messages-group",
 		"auto.offset.reset": "earliest",
 	})
 
@@ -21,13 +28,13 @@ func main() {
 
 	defer c.Close()
 
-	err = c.Subscribe("to-be-processed", nil)
+	err = c.Subscribe("unprocessed-messages", nil)
 	if err != nil {
 		log.Fatalf("Failed to subscribe to topic: %s\n", err)
 	}
 
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": "kafka:9092"})
+		"bootstrap.servers": kafkaBroker})
 
 	if err != nil {
 		fmt.Printf("Failed to create producer: %s\n", err)

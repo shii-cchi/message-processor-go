@@ -11,6 +11,7 @@ import (
 	"github.com/shii-cchi/message-processor-go/internal/handlers"
 	"github.com/shii-cchi/message-processor-go/internal/service"
 	"log"
+	"fmt"
 	"net/http"
 )
 
@@ -26,7 +27,7 @@ func NewServer(r chi.Router) (*Server, error) {
 		return nil, err
 	}
 
-	conn, err := sql.Open("postgres", cfg.DbURI)
+	conn, err := sql.Open("postgres", fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", cfg.DbUser, cfg.DbPassword, cfg.DbHost, cfg.DbPort, cfg.DbName))
 
 	if err != nil {
 		return nil, err
@@ -34,7 +35,7 @@ func NewServer(r chi.Router) (*Server, error) {
 
 	queries := database.New(conn)
 
-	kafkaProducer, err := producer.NewProducer(cfg.KafkaBrokers)
+	kafkaProducer, err := producer.NewProducer(cfg.KafkaBroker)
 
 	if err != nil {
 		return nil, err
@@ -43,7 +44,7 @@ func NewServer(r chi.Router) (*Server, error) {
 	services := service.NewMessageService(queries, kafkaProducer)
 
 	go func() {
-		kafkaConsumer, err := consumer.NewConsumer(cfg.KafkaBrokers, services)
+		kafkaConsumer, err := consumer.NewConsumer(cfg.KafkaBroker, services)
 
 		if err != nil {
 			log.Fatalf("Failed to create Kafka consumer: %s\n", err)

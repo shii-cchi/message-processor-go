@@ -10,9 +10,9 @@ type Producer struct {
 	producer *kafka.Producer
 }
 
-func NewProducer(kafkaBrokers string) (*Producer, error) {
+func NewProducer(kafkaBroker string) (*Producer, error) {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": kafkaBrokers,
+		"bootstrap.servers": kafkaBroker,
 		"acks":              "all"})
 
 	if err != nil {
@@ -43,7 +43,7 @@ func NewProducer(kafkaBrokers string) (*Producer, error) {
 }
 
 func (p *Producer) SendMessage(message []byte) error {
-	topic := "to-be-processed"
+	topic := "unprocessed-messages"
 
 	err := p.producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},

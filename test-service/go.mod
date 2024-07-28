@@ -1,4 +1,4 @@
-module kafka-test
+module test-service
 
 go 1.22.2
 
