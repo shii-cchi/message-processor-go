@@ -16,8 +16,6 @@ services:
       start_period: 30s
     ports:
       - "${DB_PORT}:${DB_PORT}"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     networks:
       - message_network
 
@@ -97,6 +95,3 @@ services:
 networks:
   message_network:
     external: true
-
-volumes:
-  postgres_data:
